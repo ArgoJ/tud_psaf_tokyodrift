@@ -1,0 +1,13 @@
+# This msg is used for making direct communication with the UcBoard
+
+# The content of the raw message
+string raw ""
+
+# The message type for the raw message, should be one of the three ASYNC, DISCARD, WAIT
+string type "WAIT"
+
+# Time out with unit ms
+uint32 timeout 1000
+---
+bool succeed
+string answer

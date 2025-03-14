@@ -1,0 +1,9 @@
+# Using this req to get the dms status.
+# The request message is a constant!
+string NAME="Dms"
+---
+bool succeed false
+# A bool variable indicates the status of dms. True->ON, False->OFF. Default OFF.
+bool on false
+# The duration of the DMS. Default -1(invalid).
+int32 value -1

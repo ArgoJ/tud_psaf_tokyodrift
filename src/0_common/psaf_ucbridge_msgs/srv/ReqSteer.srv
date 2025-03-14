@@ -1,0 +1,6 @@
+# Using this req to get the steer value of the car.
+# The request message is a constant!
+string NAME="Steer"
+---
+bool succeed false
+int32 angle -1001

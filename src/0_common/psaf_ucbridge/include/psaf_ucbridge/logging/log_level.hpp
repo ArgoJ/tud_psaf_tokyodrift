@@ -1,0 +1,13 @@
+#ifndef PSAF_UCBRIDGE__LOGGING_LEVEL_HPP_
+#define PSAF_UCBRIDGE__LOGGING_LEVEL_HPP_
+
+enum LogLevel
+{
+  FATAL = 0,
+  ERROR = 1,
+  WARN = 2,
+  INFO = 3,
+  DEBUG = 4
+};
+
+#endif  // PSAF_UCBRIDGE__LOGGING_LEVEL_HPP_

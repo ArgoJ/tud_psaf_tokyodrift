@@ -1,0 +1,10 @@
+# Using this req to get the drv mode and the corresponding value.
+string NAME="Drv"
+# Optional parameter: N->None, D->Direct, default as N.
+string mode "N"
+---
+bool succeed false
+# Mode of the answer. F->forward, B->backward, D->Direct, N->not set. Default as N.
+string mode "N"
+# Value of the corresponding mode. Default -501.
+int32 value -501

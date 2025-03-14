@@ -1,0 +1,13 @@
+# Using this req to get MAG information.
+string NAME="Mag"
+# One of the following parameter should be true.
+# True->asking asa status. Default false.
+bool opt false
+# True->asking correct value. Default false.
+bool asa false
+---
+bool succeed false
+# Response of opt. Only valid when opt is true.
+bool status
+# Response of asa. Only valid when asa is true.
+int32[<=3] asavalue

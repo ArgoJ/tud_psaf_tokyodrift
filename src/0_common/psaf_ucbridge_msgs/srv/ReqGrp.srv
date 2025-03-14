@@ -1,0 +1,13 @@
+# Using this req to get the information of group(s).
+string NAME="Grp"
+
+# Optional. If true, ask the whole groups. Default false.
+bool groups false
+
+# Group number(optional). If groups is false, this parameter must be set.
+# Default 0(invalid).
+int32 num
+---
+bool succeed false
+# The returned message
+string[<=20] info

@@ -1,0 +1,7 @@
+# Using this req to get the vout status.
+# The request message is a constant!
+string NAME="Vout"
+---
+bool succeed false
+# True->ON, false->OFF
+bool status

@@ -1,0 +1,24 @@
+lane_detection:
+  ros__parameters:
+    show_opencv_images: false
+    pub_images: true
+    interpolate: false
+    nwindows: 27
+    min_pixels: 50
+    x_shift_factor: 0.016
+    x_shift_next_factor: 0.01
+    window_width_factor: 0.038
+    lane_distance_factor: 0.14
+    safe_lane_distance_factor: 0.6
+    left_init_factor: 0.44
+    right_init_factor: 0.56
+    next_init_factor: 0.015
+    max_init_offset_factor: 0.5
+    valid_curve_factor: 0.007
+    valid_band: 12.0
+    first_iters_each_side: 2
+    iter_each_side: 1
+    binary_adaptive_box: 151
+    binary_adaptive_subtract: -48
+    num_threads: 8
+    camcal_yaml: src/1_sense/lane_detection/config/camcalout.yaml

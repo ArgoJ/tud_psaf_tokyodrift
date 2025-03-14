@@ -1,0 +1,13 @@
+# Using this req to get the IMU opt
+# The request is a constant!
+string NAME="Imu"
+---
+bool succeed
+# ARANGE default -1.
+int32 arange -1
+# AFILT default -1.
+int32 afilt -1
+# GRANGE default -1.
+int32 grange -1
+# GFILT defualt -1.
+int32 gfilt -1

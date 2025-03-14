@@ -1,0 +1,6 @@
+std_msgs/Header header
+
+float64 velocity
+float64 longitudinal_acceleration
+float64 angular_velocity
+float64 delta

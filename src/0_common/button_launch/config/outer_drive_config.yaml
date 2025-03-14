@@ -1,0 +1,5 @@
+button_launch:
+  ros__parameters:
+    first: controller_type:=purepursuit start_box:=true obstacle_detection_type:=none driving_speed:=slow driving_lane:=outer
+    second: controller_type:=purepursuit start_box:=true obstacle_detection_type:=none driving_speed:=fast driving_lane:=outer
+    third: controller_type:=purepursuit start_box:=true obstacle_detection_type:=none driving_speed:=risky driving_lane:=outer

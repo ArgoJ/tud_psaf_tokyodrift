@@ -1,0 +1,8 @@
+# Using this Req to finding out the Version of the board.
+# The request message is a constant!
+string NAME="Ver"
+---
+bool succeed false
+int32 major -1
+int32 minor -1
+int32 patch -1

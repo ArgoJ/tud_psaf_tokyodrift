@@ -1,0 +1,30 @@
+# Using this req to get the channel(s) information.
+string NAME="Channel"
+
+# This bool parameter indicates whether asking channel or channels information.
+# True->channels, false->channel. Default true.
+bool channels true
+
+# This string parameter is used to ask a specific channel information.
+# Only be set when channels is false. Default "NONE".
+string name "NONE"
+---
+bool succeed false
+
+# This key word describes how many channels were got. Default 0.
+int32 num 0
+
+# The name of a channel(s).
+string[<=21] name
+
+# The description of a channel(s).
+string[<=21] description
+
+# The unit of a channel(s).
+string[<=21] unit
+
+# The data type of a channel(s).
+string[<=21] scantime
+
+# Length of a channel(s).
+string[<=21] datatype

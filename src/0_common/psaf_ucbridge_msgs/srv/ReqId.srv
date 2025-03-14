@@ -1,0 +1,6 @@
+# Using this Req to get the id of a board.
+# The request message is a constant!
+string NAME="Id"
+---
+bool succeed false
+int32 id -1

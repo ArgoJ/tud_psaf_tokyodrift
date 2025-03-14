@@ -1,0 +1,5 @@
+bezier_curve:
+  ros__parameters:
+    ts_bezier: 0.1
+    bezier_distance: 1.1
+    control_point_frac: 0.38

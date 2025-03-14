@@ -1,0 +1,2 @@
+bool obstacle_detected_front
+bool obstacle_detected_right

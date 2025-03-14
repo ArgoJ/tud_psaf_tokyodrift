@@ -1,0 +1,5 @@
+button_launch:
+  ros__parameters:
+    first: controller_type:=bezier start_box:=false obstacle_detection_type:=depth driving_speed:=slow driving_lane:=outer
+    second: controller_type:=bezier start_box:=false obstacle_detection_type:=depth driving_speed:=fast driving_lane:=outer
+    third: controller_type:=bezier start_box:=false obstacle_detection_type:=depth driving_speed:=fast driving_lane:=inner

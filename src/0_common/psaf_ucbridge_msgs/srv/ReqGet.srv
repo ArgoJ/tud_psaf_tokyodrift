@@ -1,0 +1,22 @@
+# Using this req to get the measure value of a specific sensor(s).
+string NAME="GetValue"
+
+# This string vector should be set to specify which sensor is asked.
+string[<=21] names
+
+# This bool parameter indicates whether age is set. Default false.
+bool age false
+
+# This bool parameter indicates whether ticks is set. Default false.
+bool ticks false
+---
+bool succeed false
+
+# This int vector stores the mess value(s).
+int32[<=21] value
+
+# This int vector stores the age value(s).
+int32[<=21] age
+
+# This int vector stores the tick values(s).
+int32[<=21] ticks

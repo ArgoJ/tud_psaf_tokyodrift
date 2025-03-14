@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+    <name>sensor_filter</name>
+    <version>0.0.0</version>
+    <description>TODO: Package description</description>
+    <maintainer email="josuachristoph.lindemann@stud.tu-darmstadt.de">Josua Lindemann</maintainer>
+    <license>MIT</license>
+
+    <!-- Build tools -->
+    <buildtool_depend>ament_cmake</buildtool_depend>
+
+    <!-- Build dependencies -->
+    <build_depend>std_msgs</build_depend>
+    <build_depend>sensor_msgs</build_depend>
+    <build_depend>utility</build_depend>
+    <build_depend>helpers</build_depend>
+    <build_depend>timer</build_depend>
+    <build_depend>eigen3</build_depend>
+
+    <!-- Execution dependencies -->
+    <exec_depend>std_msgs</exec_depend>
+    <exec_depend>sensor_msgs</exec_depend>
+    <exec_depend>utility</exec_depend>
+    <exec_depend>eigen3</exec_depend>
+
+    <!-- Test dependencies -->
+    <test_depend>ament_lint_auto</test_depend>
+    <test_depend>ament_lint_common</test_depend>
+
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
+</package>

@@ -1,0 +1,14 @@
+simulated_control:
+  ros__parameters:
+    wheelbase: 0.258
+    ts: 0.005
+    max_speed: 0.8
+    min_speed: -0.5
+    max_acceleration: 3.0
+    min_acceleration: -7.0
+    max_delta: 0.314159
+    min_delta: -0.314159
+    angle_factor_offset: 0.5
+    lambda_use_sensor: 0.5
+    min_lookahead: 0.7
+    max_lookahead: 0.9

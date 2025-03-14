@@ -1,0 +1,16 @@
+# Using this req to get the US status or options.
+string NAME="Us"
+
+# Using opt or not, default false.
+bool opt false
+---
+bool succeed false
+
+# Only valid when opt is false.
+bool status false
+
+# The gain of the US. Only valid when opt is true. Default -1.
+int32 gain -1
+
+# The range of the US. Only valid when opt is true. Default -1.
+int32 range -1

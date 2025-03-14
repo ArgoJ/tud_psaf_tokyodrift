@@ -1,0 +1,6 @@
+# Using this req to get the enc steps information.
+string NAME="Enc"
+---
+bool succeed false
+# This value of steps
+int32 steps 0

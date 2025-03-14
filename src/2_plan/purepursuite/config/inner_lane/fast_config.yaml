@@ -1,0 +1,14 @@
+purepursuite:
+  ros__parameters:
+    long_max_speed: 1.4
+    long_min_angle_diff_ACC: 0.15
+    long_min_angle_diff_DEACC: 0.1
+    long_switch_steps: 4.0
+
+    lat_step_width: 10.0
+    lat_x_start: 135.0
+    lat_x_end: 190.0
+    lat_x_distance: 200.0
+    lat_wheel_base: 0.258
+
+

@@ -1,0 +1,6 @@
+# Using this req to get the SID of the board.
+# This request message is a constant.
+string NAME="Sid"
+---
+bool succeed false
+int32 sid -1

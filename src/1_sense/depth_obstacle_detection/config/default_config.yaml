@@ -1,0 +1,12 @@
+depth_obstacle_detection:
+  ros__parameters:
+    depth_scale: 0.001
+    camera_pitch: -30.5
+    camera_x_offset: 0.2
+    camera_z_offset: 0.26
+    lane_width: 0.43
+    z_low_filter: 0.02
+    z_high_filter: 0.5
+    x_high_filter: 2.5
+    point_threshold: 1000
+    num_threads: 10

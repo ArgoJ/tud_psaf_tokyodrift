@@ -1,0 +1,4 @@
+image_publisher:
+  ros__parameters:
+    image_dir: /home/argo/programmier_stuff/UNI/psaf/recordings/Selbstfahrende_Streckenaufnahmen/inner_lane/
+    ts: 1000
