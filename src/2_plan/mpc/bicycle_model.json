@@ -1,7 +1,7 @@
 {
     "acados_include_path": "/home/argo/acados_ws/acados/include",
     "acados_lib_path": "/home/argo/acados_ws/acados/lib",
-    "code_export_directory": "/home/argo/programmier_stuff/UNI/psaf/wise-2024-25-tokyodrift/test_files/c_generated_code",
+    "code_export_directory": "/home/argo/programmier_stuff/UNI/psaf/wise-2024-25-tokyodrift/src/2_plan/mpc/c_generated_code",
     "constraints": {
         "C": [],
         "C_e": [],
