@@ -19,6 +19,14 @@ def generate_launch_description() -> LaunchDescription:
     )
     debug_log_packages_expr = PythonExpression(["'", debug_logger, "'.split()"])
 
+    # Argument for Controller Type
+    task_type = LaunchConfiguration('task_type')
+    declare_task_type_arg = DeclareLaunchArgument(
+        'task_type',
+        default_value='run',
+        description='Select the task type: "run" or "test"'
+    )
+    log_task_type = LogInfo(msg=["Selected Task: ", task_type])
 
     # Argument for Controller Type
     controller_type = LaunchConfiguration('controller_type')
@@ -312,6 +320,10 @@ def generate_launch_description() -> LaunchDescription:
         name='uc_com',
         output='screen',
         parameters=[config_file_uc_com],
+        condition=IfCondition(PythonExpression([
+            "'", task_type, "'.lower()",  
+            " == 'run'"
+        ])), 
         arguments=[
             '--ros-args', '--log-level', 
             PythonExpression([
@@ -409,6 +421,7 @@ def generate_launch_description() -> LaunchDescription:
     return LaunchDescription([
         # Declare launch arguments
         declare_debug_logger_arg,
+        declare_task_type_arg,
         declare_controller_type_arg,
         declare_obstacle_detection_type_arg,
         declare_use_foxglove_arg,
@@ -420,6 +433,7 @@ def generate_launch_description() -> LaunchDescription:
         declare_depth_obstacle_detection_param_file_arg,
 
         # Loc Arguments
+        log_task_type,
         log_controller_type,
         log_obstacle_detection_type,
         log_use_start_box,

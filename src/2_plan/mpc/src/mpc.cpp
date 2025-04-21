@@ -7,7 +7,7 @@ AcadosOcpNode::AcadosOcpNode()
 
     // Abonniere die Trajektorie
     trajectory_sub_ = this->create_subscription<utility::msg::Trajectory>(
-        "trajectory", 10,
+        "tokyodrift/plan/transformed_lane", 10,
         std::bind(&AcadosOcpNode::trajectory_callback, this, std::placeholders::_1)
     );
 }
