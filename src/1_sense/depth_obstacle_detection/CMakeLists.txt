@@ -75,7 +75,7 @@ install(
     TARGETS depth_obstacle_detection
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
-    RUNTIME DESTINATION lib/depth_obstacle_detection
+    RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 # OPTIONS
