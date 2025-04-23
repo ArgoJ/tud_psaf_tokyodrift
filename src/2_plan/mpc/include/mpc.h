@@ -5,7 +5,17 @@
 #include <memory>
 #include <array>
 #include <rclcpp/rclcpp.hpp>
+
+// Include Massages
+#include "visualization_msgs/msg/marker.hpp"
+#include "geometry_msgs/msg/point.hpp"
 #include "utility/msg/trajectory.hpp"
+
+// Include project headers
+#include "point_msg_helper.hpp"
+#include "marker_publisher.hpp"
+#include "cubic_bezier.hpp"
+#include "timer.hpp"
 
 #define NX     7
 #define NZ     0
@@ -114,6 +124,8 @@ private:
 
     // Subscriber für die Trajektorie
     rclcpp::Subscription<utility::msg::Trajectory>::SharedPtr trajectory_sub_;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr trajectory_marker_pub_;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr control_points_marker_pub_;
 
 public:
     AcadosOcpNode();
@@ -123,8 +135,10 @@ private:
     // Callback für Trajektorien-Updates
     void trajectory_callback(const utility::msg::Trajectory::SharedPtr msg);
 
+    std::vector<geometry_msgs::msg::Point> get_ocp_parameters(std::vector<geometry_msgs::msg::Point>& trajectory);
+
     // Hilfsfunktion: Setzt die Kontrollpunkte als Parameter im acados OCP Solver für alle Shooting-Nodes
-    void set_ocp_parameters(const std::array<double, 8> & ctrl_points);
+    void set_ocp_parameters(const std::vector<geometry_msgs::msg::Point>& ctrl_points);
 
     // Initialisiert den OCP-Solver (z.B. durch einen Aufruf einer externen API)
     void initialize_ocp_solver();
@@ -132,11 +146,15 @@ private:
     // Löst das OCP und gibt ggf. den neuen Zustandsvektor zurück
     void solve_ocp();
 
-    // Prints the OCP solution
-    void print_state(int stage);
-    void print_input(int stage);
+    void get_input(int stage, void* values);
+    void get_state(int stage, void* values);
 
-    std::string array_stream(const double* values, int size, int stage, const char * field);
+    std::vector<geometry_msgs::msg::Point> get_all_states();
+
+    // Prints the OCP solution
+    void print_array(const double* values, int size, const char* description);
+
+    std::string get_array_string(const double* values, int size, const char* description);
 };
 
 #endif  // ACADOS_OCP_NODE_HPP

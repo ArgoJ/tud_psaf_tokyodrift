@@ -22,6 +22,9 @@
 ### Bezier control launch command
 > colcon build --packages-select utility timer helpers uc_com lane_detection start_box bezier_curve simulated_control lane_transform sensor_filter depth_obstacle_detection obstacle_detection && source install/setup.bash && ros2 launch utility tokyodrift.launch.py controller_type:=bezier use_foxglove:=true start_box:=false obstacle_detection_type:=none driving_speed:=fast driving_lane:=outer
 
+### Test launch
+> ros2 launch utility button_tokyodrift.launch.py controller_type:=bezier use_foxglove:=true start_box:=false obstacle_detection_type:=none
+
 ### Build Arguments
 - --cmake-args -DTIMER=OFF
 
