@@ -10,6 +10,7 @@
 #include "visualization_msgs/msg/marker.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "utility/msg/trajectory.hpp"
+#include "utility/msg/control.hpp"
 
 // Include project headers
 #include "point_msg_helper.hpp"
@@ -107,6 +108,21 @@ extern "C" {
     int     bicycle_model_acados_free_capsule(bicycle_model_solver_capsule* capsule);
 }
 
+struct Input {
+    double steering_angle;
+    double acceleration;
+};
+
+struct State {
+    double s;
+    double e_y;
+    double e_theta;
+    double v;
+    double delta;
+    double x;
+    double y;
+};
+
 class AcadosOcpNode : public rclcpp::Node {
 private:
     // Membervariable, um den acados OCP Solver-Handle zu speichern.
@@ -122,8 +138,13 @@ private:
     double sensor_v_;
     double sensor_delta_;
 
-    // Subscriber für die Trajektorie
+    std::vector<Input> inputs_;
+
+    // Subscriber
     rclcpp::Subscription<utility::msg::Trajectory>::SharedPtr trajectory_sub_;
+
+    // Publisher
+    rclcpp::Publisher<utility::msg::Control>::SharedPtr input_pub_;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr trajectory_marker_pub_;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr control_points_marker_pub_;
 
@@ -135,8 +156,6 @@ private:
     // Callback für Trajektorien-Updates
     void trajectory_callback(const utility::msg::Trajectory::SharedPtr msg);
 
-    std::vector<geometry_msgs::msg::Point> get_ocp_parameters(std::vector<geometry_msgs::msg::Point>& trajectory);
-
     // Hilfsfunktion: Setzt die Kontrollpunkte als Parameter im acados OCP Solver für alle Shooting-Nodes
     void set_ocp_parameters(const std::vector<geometry_msgs::msg::Point>& ctrl_points);
 
@@ -146,15 +165,21 @@ private:
     // Löst das OCP und gibt ggf. den neuen Zustandsvektor zurück
     void solve_ocp();
 
-    void get_input(int stage, void* values);
-    void get_state(int stage, void* values);
+    void publish_input(const Input& input);
 
-    std::vector<geometry_msgs::msg::Point> get_all_states();
+    Input get_input(int stage);
+    State get_state(int stage);
+
+    std::vector<Input> get_all_inputs();
+    std::vector<State> get_all_states();
+    std::vector<geometry_msgs::msg::Point> get_ocp_parameters(std::vector<geometry_msgs::msg::Point>& trajectory);
 
     // Prints the OCP solution
     void print_array(const double* values, int size, const char* description);
 
     std::string get_array_string(const double* values, int size, const char* description);
+
+    std::vector<geometry_msgs::msg::Point> state2point(std::vector<State>& states);
 };
 
 #endif  // ACADOS_OCP_NODE_HPP

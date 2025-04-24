@@ -12,6 +12,9 @@ AcadosOcpNode::AcadosOcpNode()
     );
 
     // Publisher
+    this->input_pub_ = this->create_publisher<utility::msg::Control>(
+        "tokyodrift/plan/control", 3
+    ); 
     this->trajectory_marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>(
         "tokyodrift/plan/mpc/trajectory_marker", 3
     ); 
@@ -42,6 +45,7 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
         if (!control_points.empty()) {
             this->set_ocp_parameters(control_points);
             this->solve_ocp();
+            this->inputs_ = this->get_all_inputs();
 
             publish_marker_points(
                 control_points,
@@ -56,9 +60,10 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
                 visualization_msgs::msg::Marker::SPHERE_LIST
             );
 
-            auto states = this->get_all_states();
+            std::vector<State> states = this->get_all_states();
+            std::vector<geometry_msgs::msg::Point> state_points = this->state2point(states);
             publish_marker_points(
-                states,
+                state_points,
                 this->trajectory_marker_pub_,
                 "map",
                 this->get_clock(),
@@ -79,27 +84,6 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
     }
 }
 
-std::vector<geometry_msgs::msg::Point> AcadosOcpNode::get_ocp_parameters(std::vector<geometry_msgs::msg::Point> &trajectory) {
-    double distance_fraction = 0.3;
-    geometry_msgs::msg::Point zero_point = make_point(0.0, 0.0);
-    geometry_msgs::msg::Point zero_unit_grad = make_point(1.0, 0.0);
-
-    auto [target, idx] = select_optimal_target(
-        trajectory, zero_point, zero_unit_grad, distance_fraction, 3.0, 1.3, 3.0, 1.0
-    );
-
-    geometry_msgs::msg::Point negative_unit_gradient;
-    if (idx < trajectory.size() - 1) {
-        negative_unit_gradient = get_unit_gradient(trajectory[idx + 1], target);
-    } else if (idx == trajectory.size() - 1) {
-        negative_unit_gradient = get_unit_gradient(target, trajectory[idx - 1]);
-    }
-
-    return get_control_points(
-        zero_point, zero_unit_grad, target, negative_unit_gradient, distance_fraction
-    );
-}
-
 void AcadosOcpNode::set_ocp_parameters(const std::vector<geometry_msgs::msg::Point>& ctrl_points) {
     std::array<double, NP> ctrl_points_arr = {
         ctrl_points[0].x, ctrl_points[0].y, 
@@ -107,12 +91,6 @@ void AcadosOcpNode::set_ocp_parameters(const std::vector<geometry_msgs::msg::Poi
         ctrl_points[2].x, ctrl_points[2].y,
         ctrl_points[3].x, ctrl_points[3].y,
     };
-    // std::array<double, NP> ctrl_points_arr = {
-    //     0.0,0.0, 
-    //     0.6,0.0, 
-    //     1.0,0.5, 
-    //     1.8,-0.4
-    // };
 
     // Für jeden Zeitschritt k die Parameter updaten
     int status = 0;
@@ -170,33 +148,67 @@ void AcadosOcpNode::solve_ocp() {
         RCLCPP_ERROR(this->get_logger(), "acados_solve failed: %d", status);
         return;
     }
-
-    // get optimal input
-    this->get_input(0, u0);
-    this->print_array(u0, NU, "Optimal input");
 }
 
-void AcadosOcpNode::get_input(int stage, void* values) {
+void AcadosOcpNode::publish_input(const Input &input) {
+    utility::msg::Control control_msg;
+    control_msg.delta = input.steering_angle;
+    control_msg.longitudinal_control = input.acceleration;
+    control_msg.header.stamp = this->get_clock()->now();
+
+    this->input_pub_->publish(control_msg);
+}
+
+Input AcadosOcpNode::get_input(int stage) {
+    double values[NU];
     ocp_nlp_out_get(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_, stage, "u", values);
+    return {values[0], values[1]};
 }
 
-void AcadosOcpNode::get_state(int stage, void* values) {
+State AcadosOcpNode::get_state(int stage) {
+    double values[NX];
     ocp_nlp_out_get(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_, stage, "x", values);
+    return {values[0], values[1], values[2], values[3], values[4], values[5], values[6]};
 }
 
-std::vector<geometry_msgs::msg::Point> AcadosOcpNode::get_all_states() {
-    std::vector<geometry_msgs::msg::Point> states;
-    states.reserve(N);
+std::vector<Input> AcadosOcpNode::get_all_inputs() {
+    std::vector<Input> inputs;
     for (int i = 0; i < N; i++) {
-        double values[NX];
-        this->get_state(i, values);
-        geometry_msgs::msg::Point point = make_point(values[5], values[6]);
-        states.push_back(point);
+        Input input = this->get_input(i);
+        inputs.push_back(input);
+    }
+    return inputs;
+}
 
-        std::string str = "State " + std::to_string(i);
-        this->print_array(values, NX, str.c_str());
+std::vector<State> AcadosOcpNode::get_all_states() {
+    std::vector<State> states;
+    states.reserve(N+1);
+    for (int i = 0; i <= N; i++) {
+        State state = this->get_state(i);
+        states.push_back(state);
     }
     return states;
+}
+
+std::vector<geometry_msgs::msg::Point> AcadosOcpNode::get_ocp_parameters(std::vector<geometry_msgs::msg::Point> &trajectory) {
+    double distance_fraction = 0.3;
+    geometry_msgs::msg::Point zero_point = make_point(0.0, 0.0);
+    geometry_msgs::msg::Point zero_unit_grad = make_point(1.0, 0.0);
+
+    auto [target, idx] = select_optimal_target(
+        trajectory, zero_point, zero_unit_grad, distance_fraction, 3.0, 1.3, 3.0, 1.0
+    );
+
+    geometry_msgs::msg::Point negative_unit_gradient;
+    if (idx < trajectory.size() - 1) {
+        negative_unit_gradient = get_unit_gradient(trajectory[idx + 1], target);
+    } else if (idx == trajectory.size() - 1) {
+        negative_unit_gradient = get_unit_gradient(target, trajectory[idx - 1]);
+    }
+
+    return get_control_points(
+        zero_point, zero_unit_grad, target, negative_unit_gradient, distance_fraction
+    );
 }
 
 void AcadosOcpNode::print_array(const double* values, int size, const char* description) {
@@ -213,6 +225,15 @@ std::string AcadosOcpNode::get_array_string(const double* values, int size, cons
     }
     oss << "]";
     return oss.str();
+}
+
+std::vector<geometry_msgs::msg::Point> AcadosOcpNode::state2point(std::vector<State>& states) {
+    std::vector<geometry_msgs::msg::Point> points;
+    points.reserve(states.size());
+    for (const auto& state : states) {
+        points.push_back(make_point(state.x, state.y));
+    }
+    return points;
 }
 
 int main(int argc, char ** argv) {
