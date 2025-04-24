@@ -46,7 +46,7 @@
 #define NY0    7
 #define NY     7
 #define NYN    5
-#define N      30
+#define N      10
 #define NH     1
 #define NHN    0
 #define NH0    0
@@ -54,6 +54,7 @@
 #define NPHI   0
 #define NPHIN  0
 #define NR     0
+#define TS     0.021
 
 extern "C" {
     typedef struct ocp_nlp_config ocp_nlp_config;
@@ -139,6 +140,8 @@ private:
     double sensor_delta_;
 
     std::vector<Input> inputs_;
+    int pub_input_count_;
+    rclcpp::TimerBase::SharedPtr timer_;
 
     // Subscriber
     rclcpp::Subscription<utility::msg::Trajectory>::SharedPtr trajectory_sub_;
@@ -165,7 +168,7 @@ private:
     // Löst das OCP und gibt ggf. den neuen Zustandsvektor zurück
     void solve_ocp();
 
-    void publish_input(const Input& input);
+    void publish_input();
 
     Input get_input(int stage);
     State get_state(int stage);
@@ -173,6 +176,8 @@ private:
     std::vector<Input> get_all_inputs();
     std::vector<State> get_all_states();
     std::vector<geometry_msgs::msg::Point> get_ocp_parameters(std::vector<geometry_msgs::msg::Point>& trajectory);
+    
+    void reset_timer();
 
     // Prints the OCP solution
     void print_array(const double* values, int size, const char* description);

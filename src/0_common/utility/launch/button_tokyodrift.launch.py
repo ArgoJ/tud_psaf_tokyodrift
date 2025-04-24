@@ -134,18 +134,10 @@ def generate_launch_description() -> LaunchDescription:
     log_simulated_file = LogInfo(msg=["Selected Simulated Control File: ", config_file_simulated])
 
     # Dictionary für die Config-Dateien
-    purepursuit_outer_slow_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'outer_lane', 'slow_config.yaml')
-    purepursuit_outer_fast_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'outer_lane', 'fast_config.yaml')
-    purepursuit_outer_risky_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'outer_lane', 'risky_config.yaml')
-    
     uc_com_outer_slow_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'outer_lane', 'slow_config.yaml')
     uc_com_outer_fast_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'outer_lane', 'fast_config.yaml')
     uc_com_outer_risky_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'outer_lane', 'risky_config.yaml')
 
-    purepursuit_inner_slow_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'inner_lane', 'slow_config.yaml')
-    purepursuit_inner_fast_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'inner_lane', 'fast_config.yaml')
-    purepursuit_inner_risky_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'inner_lane', 'risky_config.yaml')
-    
     uc_com_inner_slow_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'inner_lane', 'slow_config.yaml')
     uc_com_inner_fast_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'inner_lane', 'fast_config.yaml')
     uc_com_inner_risky_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'inner_lane', 'risky_config.yaml')
@@ -153,25 +145,6 @@ def generate_launch_description() -> LaunchDescription:
     uc_com_obstacle_slow_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'obstacle_detection', 'slow_config.yaml')
     uc_com_obstacle_fast_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'obstacle_detection', 'fast_config.yaml')
     uc_com_obstacle_fast_inner_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'obstacle_detection', 'fast_inner_config.yaml')
-
-
-    # Auswahl der Konfigurationsdateien basierend auf dem Fahrstil
-    config_file_purepursuit = PythonExpression([
-        "'", purepursuit_outer_slow_file,  
-        "' if '", driving_speed, "'.lower() == 'slow' and '", driving_lane, "'.lower() == 'outer' else '",
-        purepursuit_outer_fast_file,  
-        "' if '", driving_speed, "'.lower() == 'fast' and '", driving_lane, "'.lower() == 'outer' else '",
-        purepursuit_outer_risky_file, 
-        "' if '", driving_speed, "'.lower() == 'risky' and '", driving_lane, "'.lower() == 'outer' else '",
-        purepursuit_inner_slow_file,
-        "' if '", driving_speed, "'.lower() == 'slow' and '", driving_lane, "'.lower() == 'inner' else '",
-        purepursuit_inner_fast_file,  
-        "' if '", driving_speed, "'.lower() == 'fast' and '", driving_lane, "'.lower() == 'inner' else '",
-        purepursuit_inner_risky_file, 
-        "' if '", driving_speed, "'.lower() == 'risky' and '", driving_lane, "'.lower() == 'inner' else '",
-        "'"
-
-    ])
 
     config_file_uc_com = PythonExpression([
         "'", uc_com_outer_slow_file,  
@@ -195,7 +168,6 @@ def generate_launch_description() -> LaunchDescription:
         "'"
     ])
 
-    log_purepursuit_file = LogInfo(msg=["Selected Purepursuit File: ", config_file_purepursuit])
     log_uc_com_file = LogInfo(msg=["Selected UC Com File: ", config_file_uc_com])
 
 
@@ -295,24 +267,6 @@ def generate_launch_description() -> LaunchDescription:
         ])]
     )
 
-    # Purepursuite Node
-    purepursuit_node = Node(
-        package='purepursuite',
-        executable='purepursuite',
-        name='purepursuite',
-        output='screen',
-        parameters=[config_file_purepursuit],
-        condition=IfCondition(PythonExpression([
-            "'", controller_type, "'.lower()",  
-            " == 'purepursuit'"
-        ])), 
-        arguments=[
-            '--ros-args', '--log-level', 
-            PythonExpression([
-            "'debug' if 'purepursuit' in ", debug_log_packages_expr, " else 'error'"
-        ])]
-    )
-
     # UC-Bridge communicator
     uc_com_node = Node(
         package='uc_com',
@@ -374,23 +328,6 @@ def generate_launch_description() -> LaunchDescription:
         ])]
     )
 
-    # Obstacle Detection Nodes
-    obstacle_detection = Node(
-        package='obstacle_detection',
-        executable='obstacle_detection',
-        name='obstacle_detection',
-        output='screen',
-        parameters=[],
-        condition=IfCondition(PythonExpression([
-            "'", obstacle_detection_type, "'.lower()", " == 'ultrasonic'"
-        ])), 
-        arguments=[
-            '--ros-args', '--log-level', 
-            PythonExpression([
-            "'debug' if 'obstacle_detection' in ", debug_log_packages_expr, " else 'error'"
-        ])]
-    )
-
     depth_obstacle_detection_node = Node(
         package='depth_obstacle_detection',
         executable='depth_obstacle_detection',
@@ -446,7 +383,6 @@ def generate_launch_description() -> LaunchDescription:
         log_sensor_filter_param_file,
         log_bezier_file,
         log_simulated_file,
-        log_purepursuit_file,
         log_uc_com_file,
 
         # Add the nodes
@@ -454,10 +390,8 @@ def generate_launch_description() -> LaunchDescription:
         lane_detection_node,
         transform_lane_node,
         start_box,
-        obstacle_detection,
         bezier_curve_node,
-        simulated_control_node,
-        purepursuit_node,
+        # simulated_control_node,
         uc_com_node,
         depth_obstacle_detection_node,
         foxglove_bridge_node,
