@@ -108,7 +108,7 @@ lane_detection_debug
 #**/recordings/*
 install/*
 **/average_timings/* 
-**/c_generated_code/*
+# **/c_generated_code/*
 
 # special files
 *.sh
