@@ -795,7 +795,7 @@
         "globalization_line_search_use_sufficient_descent": 0,
         "globalization_use_SOC": 0,
         "hessian_approx": "GAUSS_NEWTON",
-        "hpipm_mode": "BALANCE",
+        "hpipm_mode": "SPEED",
         "integrator_type": "ERK",
         "levenberg_marquardt": 0.0,
         "log_primal_step_norm": false,
