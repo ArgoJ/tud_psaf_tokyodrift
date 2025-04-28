@@ -191,16 +191,6 @@ def generate_launch_description() -> LaunchDescription:
         description='Use Foxglove: "true" or "false"'
     )
     log_use_foxglove = LogInfo(msg=["Using Foxglove: ", use_foxglove])
-
-
-    # Argument for Start Box
-    use_start_box = LaunchConfiguration('start_box')
-    declare_use_start_box_arg = DeclareLaunchArgument(
-        'start_box',
-        default_value='false',  # Default to Bezier controller
-        description='Select if start box is used: "true" or "false"'
-    )
-    log_use_start_box = LogInfo(msg=["Use Start Box: ", use_start_box])
     
 
     ##################################### NODES ######################################
@@ -285,32 +275,12 @@ def generate_launch_description() -> LaunchDescription:
         ])]
     )
 
-    # Node für das Lane-Detection-Paket
-    start_box = Node(
-        package='start_box',  # Der Name des ROS2-Pakets
-        executable='start_box',  # Der Name der ausführbaren Datei (Node)
-        name='start_detector_node',  # Der Name des Nodes
-        output='screen',  # Ausgabe in der Konsole
-        parameters=[],  # Hier Parameter-Dateien hinzufügen, falls erforderlich
-        condition=IfCondition(PythonExpression([
-            "'", use_start_box, "'.lower()", " == 'true'"
-        ])), 
-        arguments=[
-            '--ros-args', '--log-level', 
-            PythonExpression([
-            "'debug' if 'start_box' in ", debug_log_packages_expr, " else 'error'"
-        ])]
-    )
-
     delayed_drive_publisher = TimerAction(
         period=1.0,
         actions=[
             ExecuteProcess(
                 cmd=['ros2', 'topic', 'pub', '--once', '/tokyodrift/sense/startbox', 'utility/msg/Startbox', '{start_sequence_finished: true}'],
-                output='screen',
-                condition=IfCondition(PythonExpression([
-                    "'", use_start_box, "'.lower() == 'false'"
-                ]))
+                output='screen'
             )
         ]
     )
@@ -362,7 +332,6 @@ def generate_launch_description() -> LaunchDescription:
         declare_controller_type_arg,
         declare_obstacle_detection_type_arg,
         declare_use_foxglove_arg,
-        declare_use_start_box_arg,
         declare_driving_speed_arg,
         declare_driving_lane_arg,
         declare_lane_detection_param_file_arg,
@@ -373,7 +342,6 @@ def generate_launch_description() -> LaunchDescription:
         log_task_type,
         log_controller_type,
         log_obstacle_detection_type,
-        log_use_start_box,
         log_driving_speed,
         log_driving_lane,
         log_use_foxglove,
@@ -389,7 +357,6 @@ def generate_launch_description() -> LaunchDescription:
         sensor_filter_node,
         lane_detection_node,
         transform_lane_node,
-        start_box,
         bezier_curve_node,
         # simulated_control_node,
         uc_com_node,

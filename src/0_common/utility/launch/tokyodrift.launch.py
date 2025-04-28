@@ -155,17 +155,9 @@ def generate_launch_description() -> LaunchDescription:
 
 
     # Dictionary für die Config-Dateien
-    purepursuit_outer_slow_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'outer_lane', 'slow_config.yaml')
-    purepursuit_outer_fast_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'outer_lane', 'fast_config.yaml')
-    purepursuit_outer_risky_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'outer_lane', 'risky_config.yaml')
-    
     uc_com_outer_slow_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'outer_lane', 'slow_config.yaml')
     uc_com_outer_fast_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'outer_lane', 'fast_config.yaml')
     uc_com_outer_risky_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'outer_lane', 'risky_config.yaml')
-
-    purepursuit_inner_slow_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'inner_lane', 'slow_config.yaml')
-    purepursuit_inner_fast_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'inner_lane', 'fast_config.yaml')
-    purepursuit_inner_risky_file = os.path.join(os.getcwd(), 'src', '2_plan', 'purepursuite', 'config', 'inner_lane', 'risky_config.yaml')
     
     uc_com_inner_slow_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'inner_lane', 'slow_config.yaml')
     uc_com_inner_fast_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'inner_lane', 'fast_config.yaml')
@@ -175,23 +167,6 @@ def generate_launch_description() -> LaunchDescription:
     uc_com_obstacle_fast_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'obstacle_detection', 'fast_config.yaml')
     uc_com_obstacle_fast_inner_file = os.path.join(os.getcwd(), 'src', '3_act', 'uc_com', 'config', 'obstacle_detection', 'fast_inner_config.yaml')
 
-    # Auswahl der Konfigurationsdateien basierend auf dem Fahrstil
-    config_file_purepursuit = PythonExpression([
-        "'", purepursuit_outer_slow_file,  
-        "' if '", driving_speed, "'.lower() == 'slow' and '", driving_lane, "'.lower() == 'outer' else '",
-        purepursuit_outer_fast_file,  
-        "' if '", driving_speed, "'.lower() == 'fast' and '", driving_lane, "'.lower() == 'outer' else '",
-        purepursuit_outer_risky_file, 
-        "' if '", driving_speed, "'.lower() == 'risky' and '", driving_lane, "'.lower() == 'outer' else '",
-        purepursuit_inner_slow_file,
-        "' if '", driving_speed, "'.lower() == 'slow' and '", driving_lane, "'.lower() == 'inner' else '",
-        purepursuit_inner_fast_file,  
-        "' if '", driving_speed, "'.lower() == 'fast' and '", driving_lane, "'.lower() == 'inner' else '",
-        purepursuit_inner_risky_file, 
-        "' if '", driving_speed, "'.lower() == 'risky' and '", driving_lane, "'.lower() == 'inner' else '",
-        "'"
-
-    ])
 
     config_file_uc_com = PythonExpression([
         "'", uc_com_outer_slow_file,  
@@ -215,31 +190,6 @@ def generate_launch_description() -> LaunchDescription:
         "'"
     ])
 
-    # config_file_uc_com = PythonExpression([
-    #     "'", uc_com_outer_slow_file,  
-    #     "' if '", driving_speed, "'.lower() == 'slow' and'", driving_lane, "'.lower() == 'outer' else '",
-    #     uc_com_outer_fast_file,  
-    #     "' if '", driving_speed, "'.lower() == 'fast' and'", driving_lane, "'.lower() == 'outer' else '",
-    #     uc_com_outer_risky_file, 
-    #     "' if '", driving_speed, "'.lower() == 'risky' and'", driving_lane, "'.lower() == 'outer' else '",
-    #     uc_com_inner_slow_file,  
-    #     "' if '", driving_speed, "'.lower() == 'slow' and'", driving_lane, "'.lower() == 'inner' else '",
-    #     uc_com_inner_fast_file,  
-    #     "' if '", driving_speed, "'.lower() == 'fast' and'", driving_lane, "'.lower() == 'inner' else '",
-    #     uc_com_inner_risky_file, 
-    #     "' if '", driving_speed, "'.lower() == 'risky' and'", driving_lane, "'.lower() == 'inner' else '",
-    #     uc_com_obstacle_slow_file,  
-    #     "' if '", driving_speed, "'.lower() == 'slow' and'", obstacle_detection_type, "'.lower() == 'depth' else '",
-    #     uc_com_obstacle_fast_inner_file,
-    #     "' if '", driving_speed, "'.lower() == 'fast' and'", obstacle_detection_type, "'.lower() == 'depth' and'", driving_lane, "'.lower() == 'inner' else '",
-    #     uc_com_obstacle_fast_file,  
-    #     "' if '", driving_speed, "'.lower() == 'fast' and'", obstacle_detection_type, "'.lower() == 'depth' else '",
-    #     "'"
-        
-    # ])
-
-    # log_purepursuit_file = LogInfo(msg=["Selected Purepursuit File: ", config_file_purepursuit])
-    # log_uc_com_file = LogInfo(msg=["Selected UC Com File: ", config_file_uc_com])
     
     # Arguments for Depth Obstacle Detection
     depth_obstacle_detection_param_file = LaunchConfiguration('depth_obstacle_detection_param_file')
@@ -262,16 +212,6 @@ def generate_launch_description() -> LaunchDescription:
         description='Use Foxglove: "true" or "false"'
     )
     log_use_foxglove = LogInfo(msg=["Using Foxglove: ", use_foxglove])
-
-
-    # Argument for Start Box
-    use_start_box = LaunchConfiguration('start_box')
-    declare_use_start_box_arg = DeclareLaunchArgument(
-        'start_box',
-        default_value='false',  # Default to Bezier controller
-        description='Select if start box is used: "true" or "false"'
-    )
-    log_use_start_box = LogInfo(msg=["Use Start Box: ", use_start_box])
     
 
     ##################################### NODES ######################################
@@ -338,23 +278,7 @@ def generate_launch_description() -> LaunchDescription:
         ])]
     )
 
-    # Purepursuite Node
-    purepursuit_node = Node(
-        package='purepursuite',
-        executable='purepursuite',
-        name='purepursuite',
-        output='screen',
-        parameters=[config_file_purepursuit],
-        condition=IfCondition(PythonExpression([
-            "'", controller_type, "'.lower()",  
-            " == 'purepursuit'"
-        ])), 
-        arguments=[
-            '--ros-args', '--log-level', 
-            PythonExpression([
-            "'debug' if 'purepursuit' in ", debug_log_packages_expr, " else 'error'"
-        ])]
-    )
+
 
     # UC-Bridge communicator
     uc_com_node = Node(
@@ -370,32 +294,12 @@ def generate_launch_description() -> LaunchDescription:
         ])]
     )
 
-    # Node für das Lane-Detection-Paket
-    start_box = Node(
-        package='start_box',  # Der Name des ROS2-Pakets
-        executable='start_box',  # Der Name der ausführbaren Datei (Node)
-        name='start_detector_node',  # Der Name des Nodes
-        output='screen',  # Ausgabe in der Konsole
-        parameters=[],  # Hier Parameter-Dateien hinzufügen, falls erforderlich
-        condition=IfCondition(PythonExpression([
-            "'", use_start_box, "'.lower()", " == 'true'"
-        ])), 
-        arguments=[
-            '--ros-args', '--log-level', 
-            PythonExpression([
-            "'debug' if 'start_box' in ", debug_log_packages_expr, " else 'error'"
-        ])]
-    )
-
     delayed_drive_publisher = TimerAction(
         period=1.0,
         actions=[
             ExecuteProcess(
                 cmd=['ros2', 'topic', 'pub', '--once', '/tokyodrift/sense/startbox', 'utility/msg/Startbox', '{start_sequence_finished: true}'],
                 output='screen',
-                condition=IfCondition(PythonExpression([
-                    "'", use_start_box, "'.lower() == 'false'"
-                ]))
             )
         ]
     )
@@ -463,7 +367,6 @@ def generate_launch_description() -> LaunchDescription:
         declare_controller_type_arg,
         declare_obstacle_detection_type_arg,
         declare_use_foxglove_arg,
-        declare_use_start_box_arg,
         declare_driving_speed_arg,
         declare_driving_lane_arg,
         declare_lane_detection_param_file_arg,
@@ -473,7 +376,6 @@ def generate_launch_description() -> LaunchDescription:
         # Loc Arguments
         log_controller_type,
         log_obstacle_detection_type,
-        log_use_start_box,
         log_driving_speed,
         log_driving_lane,
         log_use_foxglove,
@@ -493,11 +395,9 @@ def generate_launch_description() -> LaunchDescription:
         sensor_filter_node,
         lane_detection_node,
         transform_lane_node,
-        start_box,
         obstacle_detection,
         bezier_curve_node,
         simulated_control_node,
-        purepursuit_node,
         uc_com_node,
         depth_obstacle_detection_node,
         foxglove_bridge_node,
