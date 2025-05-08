@@ -74,18 +74,25 @@ extern "C" {
         const char* field,
         void* value
     );
-    int ocp_nlp_out_set(
+    void ocp_nlp_out_set(
         ocp_nlp_config* config,
         ocp_nlp_dims* dims,
         ocp_nlp_out* out,
+        ocp_nlp_in *in,
         int stage,
         const char* field,
         void* value
+    );
+    void ocp_nlp_out_set_values_to_zero(
+        ocp_nlp_config *config, 
+        ocp_nlp_dims *dims, 
+        ocp_nlp_out *out
     );
     int ocp_nlp_constraints_model_set(
         ocp_nlp_config* config,
         ocp_nlp_dims* dims,
         ocp_nlp_in* in,
+        ocp_nlp_out *out,
         int stage,
         const char* field,
         void* value
@@ -175,6 +182,7 @@ private:
 
     std::vector<Input> get_all_inputs();
     std::vector<State> get_all_states();
+    std::vector<geometry_msgs::msg::Point> get_all_state_points();
     std::vector<geometry_msgs::msg::Point> get_ocp_parameters(std::vector<geometry_msgs::msg::Point>& trajectory);
     
     void reset_timer();

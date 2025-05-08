@@ -224,17 +224,6 @@ int bicycle_model_acados_sim_solve(bicycle_model_sim_solver_capsule *capsule)
 }
 
 
-void bicycle_model_acados_sim_batch_solve(bicycle_model_sim_solver_capsule ** capsules, int N_batch)
-{
-
-    for (int i = 0; i < N_batch; i++)
-    {
-        sim_solve(capsules[i]->acados_sim_solver, capsules[i]->acados_sim_in, capsules[i]->acados_sim_out);
-    }
-
-
-    return;
-}
 
 
 int bicycle_model_acados_sim_free(bicycle_model_sim_solver_capsule *capsule)

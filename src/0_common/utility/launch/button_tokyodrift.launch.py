@@ -33,7 +33,7 @@ def generate_launch_description() -> LaunchDescription:
     declare_controller_type_arg = DeclareLaunchArgument(
         'controller_type',
         default_value='bezier',
-        description='Select the controller type: "bezier" or "purepursuit"'
+        description='Select the controller type: "bezier" or "mpc"'
     )
     log_controller_type = LogInfo(msg=["Selected controller: ", controller_type])
 
@@ -231,7 +231,7 @@ def generate_launch_description() -> LaunchDescription:
         parameters=[config_file_bezier],
         condition=IfCondition(PythonExpression([
             "'", controller_type, "'.lower()", 
-            " == 'bezier'"
+            " in ['mpc','bezier']"
         ])), 
         arguments=[
             '--ros-args', '--log-level', 
@@ -254,6 +254,23 @@ def generate_launch_description() -> LaunchDescription:
             '--ros-args', '--log-level', 
             PythonExpression([
             "'debug' if 'simulated_control' in ", debug_log_packages_expr, " else 'error'"
+        ])]
+    )
+
+    mpc_node = Node(
+        package='mpc',
+        executable='mpc',
+        name='mpc',
+        output='screen',
+        parameters=[],
+        condition=IfCondition(PythonExpression([
+            "'", controller_type, "'.lower()", 
+            " == 'mpc'"
+        ])), 
+        arguments=[
+            '--ros-args', '--log-level', 
+            PythonExpression([
+            "'debug' if 'mpc' in ", debug_log_packages_expr, " else 'error'"
         ])]
     )
 
@@ -358,7 +375,8 @@ def generate_launch_description() -> LaunchDescription:
         lane_detection_node,
         transform_lane_node,
         bezier_curve_node,
-        # simulated_control_node,
+        simulated_control_node,
+        mpc_node,
         uc_com_node,
         depth_obstacle_detection_node,
         foxglove_bridge_node,

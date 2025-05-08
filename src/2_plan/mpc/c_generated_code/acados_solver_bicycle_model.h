@@ -149,14 +149,8 @@ ACADOS_SYMBOL_EXPORT int bicycle_model_acados_update_params_sparse(bicycle_model
 ACADOS_SYMBOL_EXPORT int bicycle_model_acados_set_p_global_and_precompute_dependencies(bicycle_model_solver_capsule* capsule, double* data, int data_len);
 
 ACADOS_SYMBOL_EXPORT int bicycle_model_acados_solve(bicycle_model_solver_capsule * capsule);
+ACADOS_SYMBOL_EXPORT int bicycle_model_acados_setup_qp_matrices_and_factorize(bicycle_model_solver_capsule* capsule);
 
-ACADOS_SYMBOL_EXPORT void bicycle_model_acados_batch_solve(bicycle_model_solver_capsule ** capsules, int * status_out, int N_batch);
-
-ACADOS_SYMBOL_EXPORT void bicycle_model_acados_batch_set_flat(bicycle_model_solver_capsule ** capsules, const char *field, double *data, int N_data, int N_batch);
-ACADOS_SYMBOL_EXPORT void bicycle_model_acados_batch_get_flat(bicycle_model_solver_capsule ** capsules, const char *field, double *data, int N_data, int N_batch);
-
-ACADOS_SYMBOL_EXPORT void bicycle_model_acados_batch_eval_solution_sens_adj_p(bicycle_model_solver_capsule ** capsules, const char *field, int stage, double *out, int offset, int N_batch);
-ACADOS_SYMBOL_EXPORT void bicycle_model_acados_batch_eval_params_jac(bicycle_model_solver_capsule ** capsules, int N_batch);
 
 
 ACADOS_SYMBOL_EXPORT int bicycle_model_acados_free(bicycle_model_solver_capsule * capsule);

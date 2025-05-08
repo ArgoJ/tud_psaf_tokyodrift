@@ -39,7 +39,6 @@ AcadosOcpNode::~AcadosOcpNode() {
 
 void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPtr msg) {
     if (this->ocp_capsule_) {
-        // std::vector<geometry_msgs::msg::Point> trajectory = msg->points;
         START_TIMER("Get Parameters")
         auto control_points = this->get_ocp_parameters(msg->points);
         STOP_TIMER("Get Parameters")
@@ -53,11 +52,10 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
             this->solve_ocp();
             STOP_TIMER("Solve OCP")
 
-            START_TIMER("Publish Input")
-            this->inputs_ = this->get_all_inputs();
+            START_TIMER("Reset Timer")
             this->pub_input_count_ = 0;
             this->reset_timer();
-            STOP_TIMER("Publish Input")
+            STOP_TIMER("Reset Timer")
 
             publish_marker_points(
                 control_points,
@@ -81,9 +79,9 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
                 this->get_clock(),
                 Color{0.3, 1.0, 0.2},
                 "mpc_states",
-                1,
+                4,
                 0.03,
-                1.0,
+                0.7,
                 visualization_msgs::msg::Marker::LINE_STRIP
             );
         } else {
@@ -140,28 +138,17 @@ void AcadosOcpNode::initialize_ocp_solver() {
     this->ocp_nlp_solver_ = bicycle_model_acados_get_nlp_solver(this->ocp_capsule_);
 
     // Initial OCP in- and outputs
-    double x_init[NX] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    double u0[NU] = {0.0, 0.0};
-    for (int i = 0; i < N; i++) {
-        ocp_nlp_out_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_, i, "x", x_init);
-        ocp_nlp_out_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_, i, "u", u0);
-    }
+    ocp_nlp_out_set_values_to_zero(
+        this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_
+    );
 }
 
 void AcadosOcpNode::solve_ocp() {
-    // // Initial OCP in- and outputs
-    // double x_init[NX] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    // double u0[NU] = {0.0, 0.0};
-    // for (int i = 0; i < N; i++) {
-    //     ocp_nlp_out_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_, i, "x", x_init);
-    //     ocp_nlp_out_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_, i, "u", u0);
-    // }
-
     // Initial OCP-Bounds
     double bx0[NX] = {0.0, 0.0, 0.0, 1.5, 0.0, 0.0, 0.0};
-    ocp_nlp_constraints_model_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_in_, 0, "lbx", bx0);
-    ocp_nlp_constraints_model_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_in_, 0, "ubx", bx0);
-
+    ocp_nlp_constraints_model_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_in_, this->ocp_nlp_out_, 0, "lbx", bx0);
+    ocp_nlp_constraints_model_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_in_, this->ocp_nlp_out_, 0, "ubx", bx0);
+	// ocp_nlp_constraints_model_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_in_, this->ocp_nlp_out_, 0, "idxbx", idxbx);
     // Solve OCP
     int status = bicycle_model_acados_solve(ocp_capsule_);
     if (status != 0) {
@@ -176,9 +163,11 @@ void AcadosOcpNode::publish_input() {
         RCLCPP_ERROR(this->get_logger(), "No inputs available to publish");
         return;
     }
+    Input input = this->get_input(this->pub_input_count_);
+
     utility::msg::Control control_msg;
-    control_msg.delta = this->inputs_[this->pub_input_count_].steering_angle;
-    control_msg.longitudinal_control = this->inputs_[this->pub_input_count_].acceleration;
+    control_msg.delta = input.steering_angle;
+    control_msg.longitudinal_control = input.acceleration;
     control_msg.header.stamp = this->get_clock()->now();
 
     this->input_pub_->publish(control_msg);
@@ -215,6 +204,17 @@ std::vector<State> AcadosOcpNode::get_all_states() {
     }
     return states;
 }
+
+std::vector<geometry_msgs::msg::Point> AcadosOcpNode::get_all_state_points() {
+    std::vector<geometry_msgs::msg::Point> state_points;
+    state_points.reserve(N+1);
+    for (int i = 0; i <= N; i++) {
+        State state = this->get_state(i);
+        state_points.push_back(make_point(state.x, state.y));
+    }
+    return state_points;
+}
+
 
 std::vector<geometry_msgs::msg::Point> AcadosOcpNode::get_ocp_parameters(std::vector<geometry_msgs::msg::Point> &trajectory) {
     double distance_fraction = 0.3;
