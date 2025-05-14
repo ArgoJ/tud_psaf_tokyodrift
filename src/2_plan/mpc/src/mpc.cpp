@@ -48,6 +48,12 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
             this->set_ocp_parameters(control_points);
             STOP_TIMER("Set Parameter")
 
+            if (this->first_run_) {
+                START_TIMER("Preperation")
+                this->prepare_ocp_solver();
+                STOP_TIMER("Preperation")
+            }
+
             START_TIMER("Solve OCP")
             this->solve_ocp();
             STOP_TIMER("Solve OCP")
@@ -84,6 +90,10 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
                 0.7,
                 visualization_msgs::msg::Marker::LINE_STRIP
             );
+
+            START_TIMER("Preperation")
+            this->prepare_ocp_solver();
+            STOP_TIMER("Preperation")
         } else {
             RCLCPP_ERROR(this->get_logger(), "No control points found!"); 
         }
@@ -95,7 +105,7 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
 }
 
 void AcadosOcpNode::set_ocp_parameters(const std::vector<geometry_msgs::msg::Point>& ctrl_points) {
-    std::array<double, NP> ctrl_points_arr = {
+    std::array<double, BICYCLE_MODEL_NP> ctrl_points_arr = {
         ctrl_points[0].x, ctrl_points[0].y, 
         ctrl_points[1].x, ctrl_points[1].y,
         ctrl_points[2].x, ctrl_points[2].y,
@@ -104,7 +114,7 @@ void AcadosOcpNode::set_ocp_parameters(const std::vector<geometry_msgs::msg::Poi
 
     // Für jeden Zeitschritt k die Parameter updaten
     int status = 0;
-    for (int k = 0; k < N; ++k) {
+    for (int k = 0; k < BICYCLE_MODEL_N; ++k) {
         status = bicycle_model_acados_update_params(
             this->ocp_capsule_, 
             k, 
@@ -116,6 +126,7 @@ void AcadosOcpNode::set_ocp_parameters(const std::vector<geometry_msgs::msg::Poi
 
 void AcadosOcpNode::initialize_ocp_solver() {
     // Capsule allozieren
+    this->first_run_ = false;
     this->ocp_capsule_ = bicycle_model_acados_create_capsule();
     if (!ocp_capsule_) {
         RCLCPP_ERROR(this->get_logger(), "Failed to allocate solver capsule");
@@ -123,7 +134,7 @@ void AcadosOcpNode::initialize_ocp_solver() {
         return;
     }
     // Solver initialisieren (JSON muss im Arbeitsverzeichnis liegen)
-    int status = bicycle_model_acados_create(ocp_capsule_, "src/2_plan/mpc/bicycle_model.json");
+    int status = bicycle_model_acados_create(ocp_capsule_);
     if (status) {
         RCLCPP_ERROR(this->get_logger(), "Creating model failed with status %d", status);
         rclcpp::shutdown();
@@ -136,29 +147,49 @@ void AcadosOcpNode::initialize_ocp_solver() {
     this->ocp_nlp_in_ = bicycle_model_acados_get_nlp_in(this->ocp_capsule_);
     this->ocp_nlp_out_ = bicycle_model_acados_get_nlp_out(this->ocp_capsule_);
     this->ocp_nlp_solver_ = bicycle_model_acados_get_nlp_solver(this->ocp_capsule_);
+    this->ocp_nlp_opts_ = bicycle_model_acados_get_nlp_opts(this->ocp_capsule_);
 
     // Initial OCP in- and outputs
-    ocp_nlp_out_set_values_to_zero(
-        this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_
-    );
+    // ocp_nlp_out_set_values_to_zero(
+    //     this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_
+    // );
+}
+
+void AcadosOcpNode::prepare_ocp_solver() {
+    const char* field = "rti_phase";
+    int prep_value = PREPARATION;
+    ocp_nlp_sqp_rti_opts_set(this->ocp_nlp_config_, this->ocp_nlp_opts_, field, &prep_value);
+    // Solve OCP
+    int status = bicycle_model_acados_solve(ocp_capsule_);
+    if (status != 0  && status != 5) {
+        RCLCPP_ERROR(this->get_logger(), "Solver failed at preperation phase: %d", status);
+        return;
+    }
 }
 
 void AcadosOcpNode::solve_ocp() {
     // Initial OCP-Bounds
-    double bx0[NX] = {0.0, 0.0, 0.0, 1.5, 0.0, 0.0, 0.0};
+    // ocp_nlp_out_set_values_to_zero(
+    //     this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_
+    // );
+    
+    double bx0[BICYCLE_MODEL_NX] = {0.0, 0.0, 0.0, 1.5, 0.0, 0.0, 0.0};
     ocp_nlp_constraints_model_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_in_, this->ocp_nlp_out_, 0, "lbx", bx0);
     ocp_nlp_constraints_model_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_in_, this->ocp_nlp_out_, 0, "ubx", bx0);
-	// ocp_nlp_constraints_model_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_in_, this->ocp_nlp_out_, 0, "idxbx", idxbx);
+    
     // Solve OCP
+    const char* field = "rti_phase";
+    int feedb_value = FEEDBACK;
+    ocp_nlp_sqp_rti_opts_set(this->ocp_nlp_config_, this->ocp_nlp_opts_, field, &feedb_value);
     int status = bicycle_model_acados_solve(ocp_capsule_);
     if (status != 0) {
-        RCLCPP_ERROR(this->get_logger(), "acados_solve failed: %d", status);
+        RCLCPP_ERROR(this->get_logger(), "Solver failed in feedback phase: %d", status);
         return;
     }
 }
 
 void AcadosOcpNode::publish_input() {
-    if (this->inputs_.empty() || this->pub_input_count_ >= N) {
+    if (this->inputs_.empty() || this->pub_input_count_ >= BICYCLE_MODEL_N) {
         this->timer_->cancel();
         RCLCPP_ERROR(this->get_logger(), "No inputs available to publish");
         return;
@@ -175,20 +206,20 @@ void AcadosOcpNode::publish_input() {
 }
 
 Input AcadosOcpNode::get_input(int stage) {
-    double values[NU];
+    double values[BICYCLE_MODEL_NU];
     ocp_nlp_out_get(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_, stage, "u", values);
     return {values[0], values[1]};
 }
 
 State AcadosOcpNode::get_state(int stage) {
-    double values[NX];
+    double values[BICYCLE_MODEL_NX];
     ocp_nlp_out_get(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_, stage, "x", values);
     return {values[0], values[1], values[2], values[3], values[4], values[5], values[6]};
 }
 
 std::vector<Input> AcadosOcpNode::get_all_inputs() {
     std::vector<Input> inputs;
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < BICYCLE_MODEL_N; i++) {
         Input input = this->get_input(i);
         inputs.push_back(input);
     }
@@ -197,8 +228,8 @@ std::vector<Input> AcadosOcpNode::get_all_inputs() {
 
 std::vector<State> AcadosOcpNode::get_all_states() {
     std::vector<State> states;
-    states.reserve(N+1);
-    for (int i = 0; i <= N; i++) {
+    states.reserve(BICYCLE_MODEL_N+1);
+    for (int i = 0; i <= BICYCLE_MODEL_N; i++) {
         State state = this->get_state(i);
         states.push_back(state);
     }
@@ -207,8 +238,8 @@ std::vector<State> AcadosOcpNode::get_all_states() {
 
 std::vector<geometry_msgs::msg::Point> AcadosOcpNode::get_all_state_points() {
     std::vector<geometry_msgs::msg::Point> state_points;
-    state_points.reserve(N+1);
-    for (int i = 0; i <= N; i++) {
+    state_points.reserve(BICYCLE_MODEL_N+1);
+    for (int i = 0; i <= BICYCLE_MODEL_N; i++) {
         State state = this->get_state(i);
         state_points.push_back(make_point(state.x, state.y));
     }

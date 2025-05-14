@@ -5,6 +5,8 @@
 #include <memory>
 #include <array>
 #include <rclcpp/rclcpp.hpp>
+#include <stdio.h>
+#include <stdlib.h>
 
 // Include Massages
 #include "visualization_msgs/msg/marker.hpp"
@@ -18,103 +20,17 @@
 #include "cubic_bezier.hpp"
 #include "timer.hpp"
 
-#define NX     7
-#define NZ     0
-#define NU     2
-#define NP     8
-#define NP_GLOBAL     0
-#define NBX    7
-#define NBX0   7
-#define NBU    2
-#define NSBX   0
-#define NSBU   0
-#define NSH    0
-#define NSH0   0
-#define NSG    0
-#define NSPHI  0
-#define NSHN   0
-#define NSGN   0
-#define NSPHIN 0
-#define NSPHI0 0
-#define NSBXN  0
-#define NS     0
-#define NS0    0
-#define NSN    0
-#define NG     0
-#define NBXN   7
-#define NGN    0
-#define NY0    7
-#define NY     7
-#define NYN    5
-#define N      10
-#define NH     1
-#define NHN    0
-#define NH0    0
-#define NPHI0  0
-#define NPHI   0
-#define NPHIN  0
-#define NR     0
+// Include acados headers
+#include "acados/utils/print.h"
+#include "acados/utils/math.h"
+#include "acados/ocp_nlp/ocp_nlp_sqp_rti.h"
+#include "acados/ocp_nlp/ocp_nlp_common.h"
+#include "acados_c/ocp_nlp_interface.h"
+#include "acados_c/external_function_interface.h"
+#include "acados_solver_bicycle_model.h"
+#include "blasfeo_d_aux_ext_dep.h"
+
 #define TS     0.021
-
-extern "C" {
-    typedef struct ocp_nlp_config ocp_nlp_config;
-    typedef struct ocp_nlp_dims ocp_nlp_dims;
-    typedef struct ocp_nlp_out ocp_nlp_out;
-    typedef struct ocp_nlp_in ocp_nlp_in;
-    typedef struct ocp_nlp_solver ocp_nlp_solver;
-    typedef struct ocp_nlp_opts ocp_nlp_opts;
-    typedef struct bicycle_model_solver_capsule bicycle_model_solver_capsule;
-
-    // Funktionsprototyp für ocp_nlp_out_get
-    int ocp_nlp_out_get(
-        ocp_nlp_config* config,
-        ocp_nlp_dims* dims,
-        ocp_nlp_out* out,
-        int stage,
-        const char* field,
-        void* value
-    );
-    void ocp_nlp_out_set(
-        ocp_nlp_config* config,
-        ocp_nlp_dims* dims,
-        ocp_nlp_out* out,
-        ocp_nlp_in *in,
-        int stage,
-        const char* field,
-        void* value
-    );
-    void ocp_nlp_out_set_values_to_zero(
-        ocp_nlp_config *config, 
-        ocp_nlp_dims *dims, 
-        ocp_nlp_out *out
-    );
-    int ocp_nlp_constraints_model_set(
-        ocp_nlp_config* config,
-        ocp_nlp_dims* dims,
-        ocp_nlp_in* in,
-        ocp_nlp_out *out,
-        int stage,
-        const char* field,
-        void* value
-    );
-    int ocp_nlp_get(
-        ocp_nlp_solver* solver,
-        const char* field,
-        void* value
-    );
-
-    ocp_nlp_out*    bicycle_model_acados_get_nlp_out(bicycle_model_solver_capsule* capsule);
-    ocp_nlp_in*     bicycle_model_acados_get_nlp_in(bicycle_model_solver_capsule* capsule);
-    ocp_nlp_dims*   bicycle_model_acados_get_nlp_dims(bicycle_model_solver_capsule* capsule);
-    ocp_nlp_config* bicycle_model_acados_get_nlp_config(bicycle_model_solver_capsule* capsule);
-    ocp_nlp_solver* bicycle_model_acados_get_nlp_solver(bicycle_model_solver_capsule* capsule);
-    bicycle_model_solver_capsule*   bicycle_model_acados_create_capsule();
-    int     bicycle_model_acados_create(bicycle_model_solver_capsule* capsule, const char* json_file);
-    int     bicycle_model_acados_solve(bicycle_model_solver_capsule* capsule);
-    int     bicycle_model_acados_update_params(bicycle_model_solver_capsule* capsule, int stage, double* p, int np);
-    int     bicycle_model_acados_free(bicycle_model_solver_capsule* capsule);
-    int     bicycle_model_acados_free_capsule(bicycle_model_solver_capsule* capsule);
-}
 
 struct Input {
     double steering_angle;
@@ -141,6 +57,7 @@ private:
     ocp_nlp_in* ocp_nlp_in_; 
     ocp_nlp_dims* ocp_nlp_dims_;
     ocp_nlp_config* ocp_nlp_config_;
+    void* ocp_nlp_opts_;
 
     // Sensorwerte für v und delta, z. B. aus Parametern oder einem anderen Topic
     double sensor_v_;
@@ -149,6 +66,7 @@ private:
     std::vector<Input> inputs_;
     int pub_input_count_;
     rclcpp::TimerBase::SharedPtr timer_;
+    bool first_run_;
 
     // Subscriber
     rclcpp::Subscription<utility::msg::Trajectory>::SharedPtr trajectory_sub_;
@@ -171,6 +89,8 @@ private:
 
     // Initialisiert den OCP-Solver (z.B. durch einen Aufruf einer externen API)
     void initialize_ocp_solver();
+
+    void prepare_ocp_solver();
 
     // Löst das OCP und gibt ggf. den neuen Zustandsvektor zurück
     void solve_ocp();

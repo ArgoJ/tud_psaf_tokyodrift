@@ -101,7 +101,7 @@ set(ACADOS_LIB_PATH /home/argo/acados_ws/acados/lib CACHE PATH "Define the path 
 # c-compiler flags for debugging
 set(CMAKE_C_FLAGS_DEBUG "-O0 -ggdb")
 
-set(CMAKE_C_FLAGS "-fPIC -std=c99   -O2  -DACADOS_WITH_QPOASES")
+set(CMAKE_C_FLAGS "-fPIC -std=c99   -O2  ")
 #-fno-diagnostics-show-line-numbers -g
 
 include_directories(
@@ -109,7 +109,6 @@ include_directories(
    ${ACADOS_INCLUDE_PATH}/acados
    ${ACADOS_INCLUDE_PATH}/blasfeo/include
    ${ACADOS_INCLUDE_PATH}/hpipm/include
-   ${ACADOS_INCLUDE_PATH}/qpOASES_e/
 )
 
 # linker flags
@@ -117,9 +116,9 @@ link_directories(${ACADOS_LIB_PATH})
 
 # link to libraries
 if(UNIX)
-    link_libraries(acados hpipm blasfeo m -lqpOASES_e)
+    link_libraries(acados hpipm blasfeo m )
 else()
-    link_libraries(acados hpipm blasfeo -lqpOASES_e)
+    link_libraries(acados hpipm blasfeo )
 endif()
 
 # the targets

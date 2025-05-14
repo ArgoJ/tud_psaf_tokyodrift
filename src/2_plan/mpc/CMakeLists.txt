@@ -15,7 +15,9 @@ find_package(helpers REQUIRED)
 find_package(timer REQUIRED)
 
 # --- ACADOS ---
-set(ACADOS_LIB_DIR /home/argo/acados_ws/acados/lib)
+set(ACADOS_DIR /home/argo/acados_ws/acados)
+set(ACADOS_INCLUDE_PATH ${ACADOS_DIR}/include)
+set(ACADOS_LIB_DIR ${ACADOS_DIR}/lib)
 if(NOT EXISTS ${ACADOS_LIB_DIR})
     message(FATAL_ERROR "Acados lib directory not found: ${ACADOS_LIB_DIR}")
 endif()
@@ -37,6 +39,11 @@ add_executable(mpc
 include_directories(
     include
     ${utility_INCLUDE_DIRS}
+    ${ACADOS_GENERATED_CODE_DIR}
+    ${ACADOS_INCLUDE_PATH}
+    ${ACADOS_INCLUDE_PATH}/acados
+    ${ACADOS_INCLUDE_PATH}/blasfeo/include
+    ${ACADOS_INCLUDE_PATH}/hpipm/include
 )
 
 # Include Directories
