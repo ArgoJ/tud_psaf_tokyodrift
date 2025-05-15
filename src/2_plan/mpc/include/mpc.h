@@ -13,6 +13,8 @@
 #include "geometry_msgs/msg/point.hpp"
 #include "utility/msg/trajectory.hpp"
 #include "utility/msg/control.hpp"
+#include "utility/msg/filtered_hall.hpp"
+#include "utility/msg/fused_sensor.hpp"
 
 // Include project headers
 #include "point_msg_helper.hpp"
@@ -70,6 +72,8 @@ private:
 
     // Subscriber
     rclcpp::Subscription<utility::msg::Trajectory>::SharedPtr trajectory_sub_;
+    rclcpp::Subscription<utility::msg::FusedSensor>::SharedPtr fused_sensor_sub_;
+    rclcpp::Subscription<utility::msg::FilteredHall>::SharedPtr filtered_hall_sub_;
 
     // Publisher
     rclcpp::Publisher<utility::msg::Control>::SharedPtr input_pub_;
@@ -81,8 +85,10 @@ public:
     ~AcadosOcpNode();
   
 private:
-    // Callback für Trajektorien-Updates
+    // Callbacks
     void trajectory_callback(const utility::msg::Trajectory::SharedPtr msg);
+    void fused_sensor_callback(const utility::msg::FusedSensor::SharedPtr hall_ptr);
+    void hall_callback(const utility::msg::FilteredHall::SharedPtr hall_ptr);
 
     // Hilfsfunktion: Setzt die Kontrollpunkte als Parameter im acados OCP Solver für alle Shooting-Nodes
     void set_ocp_parameters(const std::vector<geometry_msgs::msg::Point>& ctrl_points);

@@ -432,7 +432,10 @@ void bicycle_model_acados_setup_nlp_in(bicycle_model_solver_capsule* capsule, co
         cost_scaling[7] = 0.021;
         cost_scaling[8] = 0.021;
         cost_scaling[9] = 0.021;
-        cost_scaling[10] = 1;
+        cost_scaling[10] = 0.021;
+        cost_scaling[11] = 0.021;
+        cost_scaling[12] = 0.021;
+        cost_scaling[13] = 1;
         for (int i = 0; i <= N; i++)
         {
             ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "scaling", &cost_scaling[i]);
@@ -790,7 +793,7 @@ static void bicycle_model_acados_create_set_opts(bicycle_model_solver_capsule* c
     bool store_iterates = false;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "store_iterates", &store_iterates);
     // set HPIPM mode: should be done before setting other QP solver options
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_hpipm_mode", "BALANCE");
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_hpipm_mode", "SPEED");
 
 
 

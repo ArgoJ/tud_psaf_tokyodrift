@@ -10,6 +10,14 @@ AcadosOcpNode::AcadosOcpNode()
         "tokyodrift/plan/transformed_lane", 1,
         std::bind(&AcadosOcpNode::trajectory_callback, this, std::placeholders::_1)
     );
+    this->fused_sensor_sub_ = this->create_subscription<utility::msg::FusedSensor>(
+        "fused_sensor", 1,
+        std::bind(&AcadosOcpNode::fused_sensor_callback, this, std::placeholders::_1)
+    );
+    this->filtered_hall_sub_ = this->create_subscription<utility::msg::FilteredHall>(
+        "filtered_hall", 1,
+        std::bind(&AcadosOcpNode::hall_callback, this, std::placeholders::_1)
+    );
 
     // Publisher
     this->input_pub_ = this->create_publisher<utility::msg::Control>(
@@ -48,18 +56,23 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
             this->set_ocp_parameters(control_points);
             STOP_TIMER("Set Parameter")
 
+            // Prepare OCP solution
             if (this->first_run_) {
                 START_TIMER("Preperation")
                 this->prepare_ocp_solver();
                 STOP_TIMER("Preperation")
+                this->first_run_ = false;
             }
 
             START_TIMER("Solve OCP")
             this->solve_ocp();
             STOP_TIMER("Solve OCP")
 
-            START_TIMER("Reset Timer")
+            // Publish control input
             this->pub_input_count_ = 0;
+            this->publish_input();
+
+            START_TIMER("Reset Timer")
             this->reset_timer();
             STOP_TIMER("Reset Timer")
 
@@ -76,8 +89,7 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
                 visualization_msgs::msg::Marker::SPHERE_LIST
             );
 
-            std::vector<State> states = this->get_all_states();
-            std::vector<geometry_msgs::msg::Point> state_points = this->state2point(states);
+            std::vector<geometry_msgs::msg::Point> state_points = this->get_all_state_points();
             publish_marker_points(
                 state_points,
                 this->trajectory_marker_pub_,
@@ -91,6 +103,7 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
                 visualization_msgs::msg::Marker::LINE_STRIP
             );
 
+            // Prepare the next OCP solution
             START_TIMER("Preperation")
             this->prepare_ocp_solver();
             STOP_TIMER("Preperation")
@@ -102,6 +115,14 @@ void AcadosOcpNode::trajectory_callback(const utility::msg::Trajectory::SharedPt
         RCLCPP_ERROR(this->get_logger(), "Solver not initialisied");    
         this->initialize_ocp_solver();
     }
+}
+
+void AcadosOcpNode::fused_sensor_callback(const utility::msg::FusedSensor::SharedPtr fused_sensor_ptr) {
+    this->sensor_delta_ = fused_sensor_ptr->delta;
+}
+
+void AcadosOcpNode::hall_callback(const utility::msg::FilteredHall::SharedPtr hall_ptr) {
+    this->sensor_v_ = hall_ptr->longitudinal_velocity;
 }
 
 void AcadosOcpNode::set_ocp_parameters(const std::vector<geometry_msgs::msg::Point>& ctrl_points) {
@@ -126,7 +147,7 @@ void AcadosOcpNode::set_ocp_parameters(const std::vector<geometry_msgs::msg::Poi
 
 void AcadosOcpNode::initialize_ocp_solver() {
     // Capsule allozieren
-    this->first_run_ = false;
+    this->first_run_ = true;
     this->ocp_capsule_ = bicycle_model_acados_create_capsule();
     if (!ocp_capsule_) {
         RCLCPP_ERROR(this->get_logger(), "Failed to allocate solver capsule");
@@ -148,11 +169,6 @@ void AcadosOcpNode::initialize_ocp_solver() {
     this->ocp_nlp_out_ = bicycle_model_acados_get_nlp_out(this->ocp_capsule_);
     this->ocp_nlp_solver_ = bicycle_model_acados_get_nlp_solver(this->ocp_capsule_);
     this->ocp_nlp_opts_ = bicycle_model_acados_get_nlp_opts(this->ocp_capsule_);
-
-    // Initial OCP in- and outputs
-    // ocp_nlp_out_set_values_to_zero(
-    //     this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_
-    // );
 }
 
 void AcadosOcpNode::prepare_ocp_solver() {
@@ -167,13 +183,16 @@ void AcadosOcpNode::prepare_ocp_solver() {
     }
 }
 
-void AcadosOcpNode::solve_ocp() {
-    // Initial OCP-Bounds
-    // ocp_nlp_out_set_values_to_zero(
-    //     this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_out_
-    // );
-    
-    double bx0[BICYCLE_MODEL_NX] = {0.0, 0.0, 0.0, 1.5, 0.0, 0.0, 0.0};
+void AcadosOcpNode::solve_ocp() {    
+    double bx0[BICYCLE_MODEL_NX] = {
+        0.0, 
+        0.0, 
+        0.0, 
+        this->sensor_v_, 
+        this->sensor_delta_, 
+        0.0, 
+        0.0
+    };
     ocp_nlp_constraints_model_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_in_, this->ocp_nlp_out_, 0, "lbx", bx0);
     ocp_nlp_constraints_model_set(this->ocp_nlp_config_, this->ocp_nlp_dims_, this->ocp_nlp_in_, this->ocp_nlp_out_, 0, "ubx", bx0);
     
@@ -189,7 +208,7 @@ void AcadosOcpNode::solve_ocp() {
 }
 
 void AcadosOcpNode::publish_input() {
-    if (this->inputs_.empty() || this->pub_input_count_ >= BICYCLE_MODEL_N) {
+    if (this->pub_input_count_ >= BICYCLE_MODEL_N) {
         this->timer_->cancel();
         RCLCPP_ERROR(this->get_logger(), "No inputs available to publish");
         return;
@@ -202,6 +221,7 @@ void AcadosOcpNode::publish_input() {
     control_msg.header.stamp = this->get_clock()->now();
 
     this->input_pub_->publish(control_msg);
+    RCLCPP_DEBUG(this->get_logger(), "Published input: {delta=%f, a=%f}", control_msg.delta, control_msg.longitudinal_control);
     this->pub_input_count_++;
 }
 
