@@ -35,7 +35,7 @@
 #define TS     0.021
 
 struct Input {
-    double steering_angle;
+    double omega;
     double acceleration;
 };
 

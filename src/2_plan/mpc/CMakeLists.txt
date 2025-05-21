@@ -15,9 +15,9 @@ find_package(helpers REQUIRED)
 find_package(timer REQUIRED)
 
 # --- ACADOS ---
-set(ACADOS_DIR /home/argo/acados_ws/acados)
-set(ACADOS_INCLUDE_PATH ${ACADOS_DIR}/include)
-set(ACADOS_LIB_DIR ${ACADOS_DIR}/lib)
+set(ACADOS_SOURCE_DIR_VAR "$ENV{ACADOS_SOURCE_DIR}")
+set(ACADOS_INCLUDE_PATH ${ACADOS_SOURCE_DIR_VAR}/include)
+set(ACADOS_LIB_DIR ${ACADOS_SOURCE_DIR_VAR}/lib)
 if(NOT EXISTS ${ACADOS_LIB_DIR})
     message(FATAL_ERROR "Acados lib directory not found: ${ACADOS_LIB_DIR}")
 endif()

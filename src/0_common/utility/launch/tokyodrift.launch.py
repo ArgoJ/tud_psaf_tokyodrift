@@ -50,7 +50,7 @@ def generate_launch_description() -> LaunchDescription:
     declare_controller_type_arg = DeclareLaunchArgument(
         'controller_type',
         default_value='bezier',
-        description='Select the controller type: "bezier" or "purepursuit"'
+        description='Select the controller type: "bezier" or "mpc"'
     )
     log_controller_type = LogInfo(msg=["Selected controller: ", controller_type])
 
@@ -252,7 +252,7 @@ def generate_launch_description() -> LaunchDescription:
         parameters=[config_file_bezier],
         condition=IfCondition(PythonExpression([
             "'", controller_type, "'.lower()", 
-            " == 'bezier'"
+            " in ['bezier','mpc']"
         ])), 
         arguments=[
             '--ros-args', '--log-level', 
@@ -278,7 +278,22 @@ def generate_launch_description() -> LaunchDescription:
         ])]
     )
 
-
+    mpc_node = Node(
+        package='mpc',
+        executable='mpc',
+        name='mpc',
+        output='screen',
+        parameters=[],
+        condition=IfCondition(PythonExpression([
+            "'", controller_type, "'.lower()", 
+            " == 'mpc'"
+        ])), 
+        arguments=[
+            '--ros-args', '--log-level', 
+            PythonExpression([
+            "'debug' if 'mpc' in ", debug_log_packages_expr, " else 'error'"
+        ])]
+    )
 
     # UC-Bridge communicator
     uc_com_node = Node(
@@ -314,23 +329,6 @@ def generate_launch_description() -> LaunchDescription:
             '--ros-args', '--log-level', 
             PythonExpression([
             "'debug' if 'sensor_filter' in ", debug_log_packages_expr, " else 'error'"
-        ])]
-    )
-
-    # Obstacle Detection Nodes
-    obstacle_detection = Node(
-        package='obstacle_detection',
-        executable='obstacle_detection',
-        name='obstacle_detection',
-        output='screen',
-        parameters=[],
-        condition=IfCondition(PythonExpression([
-            "'", obstacle_detection_type, "'.lower()", " == 'ultrasonic'"
-        ])), 
-        arguments=[
-            '--ros-args', '--log-level', 
-            PythonExpression([
-            "'debug' if 'obstacle_detection' in ", debug_log_packages_expr, " else 'error'"
         ])]
     )
 
@@ -395,9 +393,9 @@ def generate_launch_description() -> LaunchDescription:
         sensor_filter_node,
         lane_detection_node,
         transform_lane_node,
-        obstacle_detection,
         bezier_curve_node,
         simulated_control_node,
+        mpc_node,
         uc_com_node,
         depth_obstacle_detection_node,
         foxglove_bridge_node,

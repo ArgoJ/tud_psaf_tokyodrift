@@ -213,15 +213,15 @@ void AcadosOcpNode::publish_input() {
         RCLCPP_ERROR(this->get_logger(), "No inputs available to publish");
         return;
     }
-    Input input = this->get_input(this->pub_input_count_);
+    State new_state = this->get_state(this->pub_input_count_+1);
 
     utility::msg::Control control_msg;
-    control_msg.delta = input.steering_angle;
-    control_msg.longitudinal_control = input.acceleration;
+    control_msg.delta = new_state.delta;
+    control_msg.longitudinal_control = new_state.v;
     control_msg.header.stamp = this->get_clock()->now();
 
     this->input_pub_->publish(control_msg);
-    RCLCPP_DEBUG(this->get_logger(), "Published input: {delta=%f, a=%f}", control_msg.delta, control_msg.longitudinal_control);
+    RCLCPP_DEBUG(this->get_logger(), "Published input: {delta=%f, v=%f}", control_msg.delta, control_msg.longitudinal_control);
     this->pub_input_count_++;
 }
 
