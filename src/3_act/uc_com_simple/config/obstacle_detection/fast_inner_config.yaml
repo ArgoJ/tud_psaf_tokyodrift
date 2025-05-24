@@ -1,0 +1,14 @@
+uc_com:
+  ros__parameters:
+
+    min_speed_ucb: 600.0
+
+    min_angle_ucb: -175.0
+    max_angle_ucb: 235.0
+    max_speed_ucb: 1000.0
+    hysterese_distance: 0.0
+    hysterese_offset: 0.03
+    min_angle_diff: 0.01
+    switch_steps: 4.0
+    steering_speed_factor: 2500.0
+    avoid_crash: false
